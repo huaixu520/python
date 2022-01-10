@@ -1,0 +1,37 @@
+1、通过Advertising.csv数据集建立预测某种商品的销售线性回归模型，所谓建立模型，就是要通过数以后在获得线性回归模的参数。具体要求
+   （1）通过sklearn提供的线性回归相关的函数来建立预测销售的线性回归模型
+   （2）通过教材第2章所学的线性回归知识，来建立预测销售的线性回归模型，具体而言，
+	就是要通过教材22页的公式（2.16）来获得线性回归模的参数，
+	该公式能计算出线性回归模的参数吗？如果不能，怎么改进才能计算线性回归模的参数。
+   （3）教材22页的公式（2.15）其实是线性目函数（参见公式）的梯度，可通过梯度下降方法来获得线性回归模的参数，
+	这种方法与上面两种方法相比有什么优点和缺点？
+2、根据Wage.csv数据集建立预测工资（该数据集的wage列）的线性回归模型，要求给出哪些特征对工资影响较大，哪些特征对工资基本上没有影响。
+
+3、(选做)完成kaggle中关于天气相关的回归问题，具体地址参见：https://www.kaggle.com/smid80/weatherww2
+
+import numpy as np
+import pandas as pd
+from numpy.linalg import inv  # 矩阵的逆
+from numpy import dot  # 矩阵相乘
+from sklearn.model_selection import train_test_split
+
+data = pd.read_csv("Advertising.csv")
+
+
+def f(x1, x2, x3):
+    y = beta[0, 0] + beta[1, 0] * x1 + beta[2, 0] * x2 + beta[3, 0] * x3
+    return y
+
+
+data = data.rename(columns={'Unnamed: 0': 'X0'})
+data.iloc[:, 0:1] = 1
+train, test = train_test_split(data, test_size=0.8)
+X = np.array(train.iloc[:, 0:4])
+Y = np.array(train.iloc[:, 4:5])
+beta = dot(inv(dot(X.T, X)), dot(X.T, Y))
+print("模型参数：")
+print(beta)
+
+test = np.array(test.iloc[:, 1:5])
+for x, y, z, t in test:
+    print("预测结果：", f(x, y, z), "，真实结果：", t)
