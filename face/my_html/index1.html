@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <!--meta表示网页采用utf8格式-->
+        <meta charset="UTF-8">
+        <title>人脸识别签到打卡系统</title>
+        <link rel="stylesheet" href="../my_js/bootstrap.css"/>
+        <script src="../my_js/jquery.min.js"></script>
+        <script src="../my_js/boostrap.js"></script>
+        <style>
+            body{
+                background:url("../my_js/bg.jpg") no-repeat;
+                background-size:100% 100%;
+                height:800px;
+            }
+            video,img{
+                border:5px dashed purple;
+            }
+            h1{
+                color:blue;
+				font-family:"华文行楷";
+                font-size:40px;
+            }
+            h3{
+                color:red;
+                font-family:"华文琥珀"
+            }
+        </style>
+    </head>
+    <body>
+        <br/>
+        <center><h1>人脸签到打卡系统</h1></center>
+        <center> <h3 id="kou">检测是否带口罩</h3><center>
+        <div class="row">
+            <div class="col-sm-6">
+                <h3 class="showTime">当前时间：xx年xx月 xx:xx:xx</h3>
+                <center><video width="350" height="350" id="myvideo"></video></center>
+            </div>
+            <div class="col-sm-6">
+                <center><h3 id="mytime">你当前还没有签到数据</h3></center>
+                <center><img src="../my_js/404.jpg" id="myimg" width="350" height="350"/></center>
+                <canvas width="350" height="350" id="mycanvas"></canvas>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-sm-5">
+            </div>
+            <div class="col-sm-2">
+                <button type="button" onclick="open_camera()" class="btn btn-success btn-lg">签到</button>
+                <button type="button" onclick="qiantui()" class="btn btn-success btn-lg">签退</button>
+            </div>
+            <div class="col-sm-5">
+            </div>
+        </div>
+        <script>
+            //获取画布
+            mycanvas=document.getElementById("mycanvas")
+            //隐藏画布,visibility：hidden占位隐藏，这里不合适，换成不占位display:none
+            mycanvas.style="display:none"
+            function qiantui(){
+                //html中的画布分为2D和3D画，这里获取的2D画
+                ctx=mycanvas.getContext("2d")
+                //调用drawImage画myvideo中的内容，画图像指示的从哪里画到哪里，从0,0到400,400
+                ctx.drawImage(myvideo,0,0,350,350)
+                //把canvas画布的图片变成数据,使用方法toDataURL把图片转成数据
+                result=mycanvas.toDataURL()
+                result=result.substring(22)
+                //ajax请求提交后台数据
+                $.post("/qiantui",{"face":result},function(res){
+                    console.log(res)
+                    document.getElementById("mytime").innerText="签退时间:"+res
+
+                })
+            }
+            function open_camera(){
+                //html中的画布分为2D和3D画，这里获取的2D画
+                ctx=mycanvas.getContext("2d")
+                //调用drawImage画myvideo中的内容，画图像指示的从哪里画到哪里，从0,0到350,350
+                ctx.drawImage(myvideo,0,0,350,350)
+                //把canvas画布的图片变成数据,使用方法toDataURL把图片转成数据
+                result=mycanvas.toDataURL()
+                result=result.substring(22)
+                //ajax请求提交后台数据
+                $.post("/cut_face",{"face":result},function(res){
+                    //console.log(res)
+                    res=JSON.parse(res)
+                    imgcode="data:image/png;base64,"+res["face"]
+                    document.getElementById("myimg").src=imgcode
+                    //获取签到时间
+                    document.getElementById("mytime").innerText="签到时间:"+res["time"]
+                    document.getElementById("kou").innerText=res["names"]
+                })
+            }
+            //进入页面后就执行，所以直接在<script>标签中使用
+            //先根据video的id取video的标签
+            myvideo=document.getElementById("myvideo")
+            //设置一个摄像头的焦距,在这里只是进行录像，不录音，指明video,如果录音需要指定audio
+            cons={
+                video:{
+                    width:350,
+                    height:350
+                }
+            }
+            //固写调用摄像头的语句
+            pros=navigator.mediaDevices.getUserMedia(cons)
+            //把摄像头的内容给video标签,then如果存在摄像头，就把摄像头的内容取出，放在function的res中
+            pros.then(function(res){
+                //res就是取出的摄像头内容,把内容取出放在myvideo中srcObject
+                myvideo.srcObject=res
+                //播放视频
+                myvideo.play()
+            })
+
+            // 浏览器实时刷新时间
+            var t = null;
+            t = setTimeout(time, 1000);
+            //开始运行
+            function time() {
+                clearTimeout(t);
+                //清除定时器
+                dt = new Date();
+                var y = dt.getFullYear();
+                var mt = dt.getMonth() + 1;
+                var day = dt.getDate();
+                var h = dt.getHours(); //获取时
+                var m = dt.getMinutes(); //获取分
+                var s = dt.getSeconds(); //获取秒
+                document.querySelector(".showTime").innerHTML ="当前时间：" +y +"年" +mt +"月" +day +"日 " +h +":" +m +":" +s ;
+                t = setTimeout(time, 1000); //设定定时器，循环运行
+            }
+        </script>
+    </body>
+</html>
